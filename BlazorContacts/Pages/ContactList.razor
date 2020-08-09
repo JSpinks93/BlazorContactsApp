@@ -1,0 +1,88 @@
+@page "/"
+
+@using BlazorContacts.Components
+@using Microsoft.Extensions.Configuration
+@using System.Net
+
+@inject IConfiguration Configuration
+@inject HttpClient HttpClient
+
+<div class="container">
+
+    <h1>Contact List</h1>
+
+    <div class="row">
+        @if (!IsLoading)
+        {
+            if (contacts.Count > 0)
+            {
+                foreach (var contact in contacts)
+                {
+                    <div class="col-4 p-3">
+                        <ContactCard Contact="@contact"></ContactCard>
+                    </div>
+                }
+            }
+            else
+            {
+                <h3>No contacts to display!</h3>
+            }
+        }
+        else
+        {
+            <div class="p-3">
+                <h3>Loading...</h3>
+            </div>
+        }
+
+
+    </div>
+
+    <div class="row">
+        <div class="col-3 pl-3">
+            <input class="form-control" placeholder="First Name" @bind="newContact.FirstName">
+        </div>
+        <div class="col-3 pl-2">
+            <input class="form-control" placeholder="Last Name" @bind="newContact.LastName">
+        </div>
+    </div>
+    <div class="row">
+        <div class="pl-3 pt-3">
+            <button class="btn btn-primary" @onclick="AddContact">Add Contact</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private IList<Contact> contacts = new List<Contact>();
+    private Contact newContact = new Contact();
+    private bool IsLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        contacts = await HttpClient.GetFromJsonAsync<List<Contact>>(@Configuration["getContactEndpoint"]);
+
+        IsLoading = false;
+    }
+
+    private async Task AddContact()
+    {
+        if (string.IsNullOrWhiteSpace(newContact.FirstName) && string.IsNullOrWhiteSpace(newContact.LastName))
+        {
+            return;
+        }
+
+        var result = await HttpClient.PostAsJsonAsync<Contact>(@Configuration["insertContactEndpoint"], newContact);
+
+        if (result.StatusCode == HttpStatusCode.OK)
+        {
+            var newContactId = await result.Content.ReadAsStringAsync();
+
+            newContact.ContactId = Convert.ToInt32(newContactId);
+
+            contacts.Add(newContact);
+        }
+
+        newContact = new Contact();
+    }
+}

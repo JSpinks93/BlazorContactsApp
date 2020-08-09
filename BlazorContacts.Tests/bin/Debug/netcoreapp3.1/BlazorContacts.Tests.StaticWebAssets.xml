@@ -1,0 +1,4 @@
+﻿<StaticWebAssets Version="1.0">
+  <ContentRoot BasePath="/" Path="C:\Blazor\BlazorContacts\wwwroot\" />
+  <ContentRoot BasePath="/" Path="C:\Blazor\BlazorContacts\bin\Debug\netstandard2.1\wwwroot\" />
+</StaticWebAssets>

@@ -1,0 +1,97 @@
+@page "/contactdetails/{contactID:int}"
+
+@using Microsoft.Extensions.Configuration
+
+@inject IConfiguration Configuration
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+@if (Contact != null)
+{
+    <EditForm Model="@Contact" OnValidSubmit="UpdateContact">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="container">
+            <h1>@InitialContact.FirstName @InitialContact.LastName</h1>
+            <div class="row">
+                <div class="col-6 p-3">
+                    <label>First Name</label>
+                    <InputText class="form-control" placeholder="First Name" readonly="@IsReadOnly" @bind-Value="Contact.FirstName" />
+                </div>
+                <div class="col-6 p-3">
+                    <label>Last Name</label>
+                    <InputText class="form-control" placeholder="Last Name" readonly="@IsReadOnly" @bind-Value="Contact.LastName" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="pl-3">
+                    @if (IsReadOnly)
+                    {
+                        <button class="btn btn-primary" @onclick="ToggleEditing">Edit</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-outline-primary">Update</button>
+                    }
+                </div>
+                <div class="pl-2">
+                    @if (IsReadOnly)
+                    {
+                        <button class="btn btn-danger" @onclick="DeleteContact">Delete</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-outline-danger" @onclick="ToggleEditing">Cancel</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int ContactID { get; set; }
+    private Contact InitialContact { get; set; }
+    private Contact Contact { get; set; }
+    private bool IsReadOnly { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ContactID = ContactID;
+
+        var result = await HttpClient.GetFromJsonAsync<List<Contact>>($"{@Configuration["getContactEndpoint"]}?id={ContactID}");
+        var contact = result.FirstOrDefault();
+
+        InitialContact = contact;
+        Contact = new Contact(contact);
+    }
+
+    private void ToggleEditing()
+    {
+        IsReadOnly = !IsReadOnly;
+    }
+
+    private async Task UpdateContact()
+    {
+        var result = await HttpClient.PutAsJsonAsync<Contact>($"{@Configuration["updateContactEndpoint"]}?id={ContactID}", Contact);
+
+        if (result.IsSuccessStatusCode)
+        {
+            IsReadOnly = true;
+            InitialContact = Contact;
+            Contact = new Contact(Contact);
+        }
+    }
+
+    private async Task DeleteContact()
+    {
+        var result = await HttpClient.DeleteAsync($"{@Configuration["deleteContactEndpoint"]}?id={ContactID}");
+
+        if (result.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo($"/");
+        }
+    }
+}

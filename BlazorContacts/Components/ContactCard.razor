@@ -1,0 +1,18 @@
+﻿@inject NavigationManager NavigationManager
+
+<div class="card" style="width: 13rem;">
+    <div class="card-body">
+        <h5 class="red-text">@Contact.FirstName @Contact.LastName</h5>
+        <button class="btn btn-outline-primary" @onclick="@(() => NavigateToContactDetails(Contact.ContactId))">Details</button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Contact Contact { get; set; }
+
+    private void NavigateToContactDetails(int contactId)
+    {
+        NavigationManager.NavigateTo($"contactdetails/{contactId}");
+    }
+}
